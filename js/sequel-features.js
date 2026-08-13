@@ -1,9 +1,10 @@
 /* Glasshouse Letters — sequel systems layered onto the complete original engine. */
 const sequelDay = () => new Date().toISOString().slice(0,10);
 function sequelDefaults(){
-  if(!S.sequel) S.sequel={lead:null,legacy:1,season:0,seasonClaimed:false,glassRooms:0,showWins:0,secret:false,lastSeed:null,visitors:[],request:null,favoriteIds:[],scenePage:0};
-  if(!S.sequel.favoriteIds)S.sequel.favoriteIds=[];
-  S.gentle=true;
+  const defaults=typeof GLASSHOUSE_SEQUEL_DEFAULTS==='undefined'?{lead:null,legacy:1,season:0,seasonClaimed:false,glassRooms:0,showWins:0,secret:false,lastSeed:null,lastMorning:null,visitors:[],request:null,favoriteIds:[],scenePage:0}:GLASSHOUSE_SEQUEL_DEFAULTS;
+  if(!S.sequel)S.sequel={...defaults};
+  else Object.keys(defaults).forEach(key=>{if(S.sequel[key]===undefined)S.sequel[key]=Array.isArray(defaults[key])?[]:defaults[key]});
+  if(typeof S.gentle!=='boolean')S.gentle=true;
   try{const old=JSON.parse(localStorage.getItem('sabrina-glasshouse-letters-v1'));if(old&&old.lead&&!S.sequel.lead)S.sequel.lead=old.lead}catch(e){}
 }
 const coreLoad=load; load=function(raw){const r=coreLoad(raw);sequelDefaults();return r};

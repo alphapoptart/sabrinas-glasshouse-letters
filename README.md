@@ -11,7 +11,7 @@ A full mobile-first sequel built on the complete original game engine, with a ne
 - timed propagation, potting-up, cross-species grafting and chimera outcomes
 - Perfect Pour, Bug Blitz and Leaf Match repeatable activities with tickets and rewards
 - synthesized sound effects and generative greenhouse music
-- dual localStorage/IndexedDB saves, persistence request, file backup/restore and shareable garden visits
+- dual localStorage/IndexedDB saves, forward-compatible migration, persistence request, file backup/restore and shareable garden visits
 - living garden scene with paged garden beds, changing weather and day/night atmosphere, Princess Sabrina or Prince Sean, Sunstone Cactus Walk, Joey, Salem and Trace
 - Garden Legacy, four rotating seasonal events with real challenges, five-category judged plant shows, daily companion moments, personality requests, photo journal, visitor book, surprise seeds, room-by-room glasshouse mechanics and Secret Garden progression
 - Gentle Mode permanently defaulted on: ordinary absence cannot kill plants
