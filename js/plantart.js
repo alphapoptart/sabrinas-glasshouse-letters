@@ -187,7 +187,11 @@ const lithopsBlade = (L, W) => {
   const rx = W * 0.44, ry = L * 0.44;
   return (ellipsePath(-rx * 1.04, -ry, rx, ry) + ellipsePath(rx * 1.04, -ry, rx, ry)).trim();
 };
-const columnBlade = (L, W) => `M ${-W * .62} 0 L ${-W * .7} ${-L * .72} Q ${-W * .58} ${-L} 0 ${-L} Q ${W * .58} ${-L} ${W * .7} ${-L * .72} L ${W * .62} 0 Z`;
+const columnBlade = (L, W, arms) => {
+  let d=`M ${-W * .62} 0 L ${-W * .7} ${-L * .72} Q ${-W * .58} ${-L} 0 ${-L} Q ${W * .58} ${-L} ${W * .7} ${-L * .72} L ${W * .62} 0 Z`;
+  if(arms){const level=arms==='saguaro'?.48:.34,height=arms==='saguaro'?.34:.48;for(const k of[-1,1])d+=` M ${k*W*.5} ${-L*level} C ${k*W*1.5} ${-L*(level-.02)}, ${k*W*1.6} ${-L*(level+.12)}, ${k*W*1.6} ${-L*(level+height)} Q ${k*W*1.45} ${-L*(level+height+.1)} ${k*W*1.28} ${-L*(level+height)} L ${k*W*1.2} ${-L*(level+.18)} Q ${k*W*.8} ${-L*(level+.18)} ${k*W*.5} ${-L*(level+.12)} Z`}
+  return d;
+};
 const starCactusBlade = (L, W) => {
   const pts=[]; for(let i=0;i<16;i++){const a=-Math.PI/2+i*Math.PI/8,r=i%2?W*.52:W;pts.push(`${Math.cos(a)*r} ${-L*.5+Math.sin(a)*r}`)}
   return `M ${pts.join(' L ')} Z`;
@@ -271,7 +275,7 @@ function leafOutline(sp, L, rng, fenAmt) {
     case 'pad':        d = padBlade(L, W * 1.8); break;
     case 'globe':      d = globeBlade(L, W * 1.9); break;
     case 'lithops':    d = lithopsBlade(L, W * 1.9); break;
-    case 'column':     d = columnBlade(L, W * 1.5); break;
+    case 'column':     d = columnBlade(L, W * 1.5, s.arms); break;
     case 'starcactus': d = starCactusBlade(L, W * 1.9); break;
     case 'segment':    d = segmentBlade(L, W * 1.4, s.margin === 'scallop'); break;
     case 'rosette':    d = rosetteBlade(L, W * 1.4, s.margin === 'teeth'); break;
@@ -600,6 +604,12 @@ function renderPlant(plant, opt = {}) {
       x = cx + (col - 1) * (26 - row * 4) + (rng() - 0.5) * 8;
       y = baseY - 2 - row * 9;
       rot = (col - 1) * 9 + (rng() - 0.5) * 10;
+      if(sp.id==='mooncactus'){
+        x=cx+(col-1)*25;
+        y=baseY-48-row*5;
+        rot=(col-1)*4;
+        art+=`<path d="M ${x-7} ${baseY} L ${x-8} ${y+10} Q ${x} ${y+3} ${x+8} ${y+10} L ${x+7} ${baseY} Z" fill="#3f804d" stroke="#2a5d38" stroke-width="1.5"/><path d="M ${x} ${baseY-3} L ${x} ${y+9}" stroke="#86af68" stroke-width="2" stroke-dasharray="4 3"/>`;
+      }
     } else {
       x = cx + side * (4 + t * 5);
       y = baseY - stemH * (0.12 + t * 0.86);
