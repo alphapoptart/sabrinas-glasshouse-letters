@@ -4,7 +4,8 @@ const vm = require('node:vm');
 const path = require('node:path');
 
 let loadedState = null;
-const context = vm.createContext({ console });
+const backupStore = new Map();
+const context = vm.createContext({ console, localStorage:{getItem:key=>backupStore.get(key)||null,setItem:(key,value)=>backupStore.set(key,value)} });
 context.blankSave = () => ({
   v: 1, coins: 250, gems: 2, xp: 0, level: 1, plants: [], lab: [], nextId: 1,
   inv: { fertilizer: 3, neem: 1, rooting: 1 }, decor: {}, dex: {}, market: [],
@@ -50,7 +51,7 @@ const prior = {
 };
 
 const migrated = JSON.parse(JSON.stringify(context.MIGRATION_TEST.migrateSaveObject(prior)));
-assert.equal(migrated.v, 3);
+assert.equal(migrated.v, 4);
 assert.equal(migrated.coins, 4321); assert.equal(migrated.gems, 17);
 assert.equal(migrated.xp, 88); assert.equal(migrated.level, 12); assert.equal(migrated.streak, 9);
 Object.entries(prior.inv).forEach(([key,value])=>assert.equal(migrated.inv[key],value));
@@ -73,11 +74,31 @@ assert.equal(migrated.sound, false); assert.equal(migrated.music, true);
 assert.equal(migrated.sfxVol, 23); assert.equal(migrated.musVol, 61);
 assert.equal(migrated.gentle, false); assert.equal(migrated.gardener, 'Sean'); assert.equal(migrated.hideInstall, true);
 assert.deepEqual(migrated.unknownFutureField, { stillHere: true });
+assert.deepEqual(migrated.estate.heirloomIds, [41], 'legacy favorites become estate heirlooms without changing ids');
+assert.equal(migrated.estate.resources.glass, 8, 'three prior room restores become material credit');
+assert.equal(migrated.estate.resources.timber, 5);
+assert.equal(migrated.estate.resources.copper, 2);
+assert.equal(migrated.estate.shells.moon, true); assert.equal(migrated.estate.shells.sunstone, true);
+assert.equal(migrated.estate.rooms.fernery.companions.Joey.bond, 1);
+assert.deepEqual(migrated.estate.history.visitors, prior.sequel.visitors);
 
 context.load(JSON.stringify(prior));
-assert.equal(loadedState.v, 3, 'the real load wrapper should apply the migration');
+assert.equal(loadedState.v, 4, 'the real load wrapper should apply the migration');
 assert.equal(loadedState.coins, 4321); assert.equal(loadedState.plants[0].nick, 'Goldie');
 assert.equal(loadedState.sequel.lead, 'sean'); assert.equal(loadedState.sequel.legacy, 7);
 assert.equal(loadedState.sound, false); assert.deepEqual(loadedState.unknownFutureField, { stillHere: true });
+assert.equal(backupStore.get('sabrina-glasshouse-pre-estate-v3-backup'), JSON.stringify(prior), 'the raw prior save is backed up before migration');
 
-console.log('Migration checks passed: prior v1/v2 progress preserved and new v3 fields defaulted safely.');
+const partial = { v: 3, plants:[{id:9,speciesId:'monstera',leaves:[]}], nextId:10, coins:77, sequel:{favoriteIds:[9],glassRooms:1}, estate:{rooms:{fernery:{placements:{a2:9},diagnosed:{pane:true},customRoomFlag:'preserve'}}}, customRoot:'keep' };
+const partialMigrated = JSON.parse(JSON.stringify(context.MIGRATION_TEST.migrateSaveObject(partial)));
+assert.equal(partialMigrated.coins,77); assert.equal(partialMigrated.plants[0].id,9);
+assert.equal(partialMigrated.estate.rooms.fernery.placements.a2,9);
+assert.equal(partialMigrated.estate.rooms.fernery.diagnosed.pane,true);
+assert.equal(partialMigrated.estate.rooms.fernery.diagnosed.bench,false);
+assert.equal(partialMigrated.estate.rooms.fernery.customRoomFlag,'preserve');
+assert.equal(partialMigrated.customRoot,'keep');
+
+const twice = JSON.parse(JSON.stringify(context.MIGRATION_TEST.migrateSaveObject(partialMigrated)));
+assert.deepEqual(twice, partialMigrated, 'estate migration must be deterministic and idempotent');
+
+console.log('Migration checks passed: v1–v3 progress preserved, raw backup written, partial saves repaired, and v4 migration is idempotent.');
