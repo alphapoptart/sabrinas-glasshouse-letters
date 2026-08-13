@@ -187,6 +187,20 @@ const lithopsBlade = (L, W) => {
   const rx = W * 0.44, ry = L * 0.44;
   return (ellipsePath(-rx * 1.04, -ry, rx, ry) + ellipsePath(rx * 1.04, -ry, rx, ry)).trim();
 };
+const columnBlade = (L, W) => `M ${-W * .62} 0 L ${-W * .7} ${-L * .72} Q ${-W * .58} ${-L} 0 ${-L} Q ${W * .58} ${-L} ${W * .7} ${-L * .72} L ${W * .62} 0 Z`;
+const starCactusBlade = (L, W) => {
+  const pts=[]; for(let i=0;i<16;i++){const a=-Math.PI/2+i*Math.PI/8,r=i%2?W*.52:W;pts.push(`${Math.cos(a)*r} ${-L*.5+Math.sin(a)*r}`)}
+  return `M ${pts.join(' L ')} Z`;
+};
+const segmentBlade = (L, W, scallop=false) => {
+  let d='M 0 0'; for(let i=0;i<5;i++){const y=-L*i/5,y2=-L*(i+1)/5,ww=W*(scallop?.78:(i%2?.58:1));d+=` C ${ww} ${y-L*.05}, ${ww} ${y2+L*.05}, 0 ${y2}`}
+  for(let i=4;i>=0;i--){const y=-L*(i+1)/5,y2=-L*i/5,ww=-W*(scallop?.78:(i%2?.58:1));d+=` C ${ww} ${y+L*.05}, ${ww} ${y2-L*.05}, 0 ${y2}`} return d+' Z';
+};
+const rosetteBlade = (L,W,teeth=false) => teeth
+  ? `M 0 0 L ${W*.6} ${-L*.18} L ${W*.42} ${-L*.28} L ${W*.7} ${-L*.4} L ${W*.4} ${-L*.52} L ${W*.5} ${-L*.7} L 0 ${-L} L ${-W*.5} ${-L*.7} L ${-W*.4} ${-L*.52} L ${-W*.7} ${-L*.4} L ${-W*.42} ${-L*.28} L ${-W*.6} ${-L*.18} Z`
+  : outline(L,W,{sinus:0,sh:.35,tip:.22});
+const dolphinBlade = (L,W) => `M 0 0 C ${W*.8} ${-L*.08}, ${W*.9} ${-L*.55}, ${W*.18} ${-L*.72} L ${W*.5} ${-L} L 0 ${-L*.82} L ${-W*.36} ${-L} L ${-W*.18} ${-L*.7} C ${-W*.75} ${-L*.48}, ${-W*.62} ${-L*.1}, 0 0 Z`;
+const triangleBlade = (L,W) => `M 0 0 L ${W} ${-L*.86} L ${-W} ${-L*.86} Z`;
 
 /* Hole shapes, painted black into the leaf's mask. Ellipses that straddle the
    margin read as splits; interior ones are classic monstera windows. */
@@ -257,6 +271,13 @@ function leafOutline(sp, L, rng, fenAmt) {
     case 'pad':        d = padBlade(L, W * 1.8); break;
     case 'globe':      d = globeBlade(L, W * 1.9); break;
     case 'lithops':    d = lithopsBlade(L, W * 1.9); break;
+    case 'column':     d = columnBlade(L, W * 1.5); break;
+    case 'starcactus': d = starCactusBlade(L, W * 1.9); break;
+    case 'segment':    d = segmentBlade(L, W * 1.4, s.margin === 'scallop'); break;
+    case 'rosette':    d = rosetteBlade(L, W * 1.4, s.margin === 'teeth'); break;
+    case 'dolphin':    d = dolphinBlade(L, W * 1.5); break;
+    case 'triangle':   d = triangleBlade(L, W * 1.1); break;
+    case 'coin':       d = ellipsePath(0, -L * .5, L * .48, L * .48).trim(); break;
     case 'strap':      d = s.margin === 'wavy' ? wavyEdge(L, W, outline(L, W, s)) : outline(L, W, s); break;
     default:           d = outline(L, W, s);
   }
@@ -322,6 +343,12 @@ function veins(spec, L, W, color, rng) {
     }
     return g;
   }
+  if (style === 'chevron') {
+    let g=mid(.025); for(let i=1;i<=6;i++){const y=-L*(.12+i*.12),x=W*(.75-i*.035);g+=`<path d="M ${-x} ${y-L*.08} L 0 ${y} L ${x} ${y-L*.08}" stroke="${color}" stroke-width="${L*.035}" fill="none" opacity=".75"/>`} return g;
+  }
+  if (style === 'net') {
+    let g=mid(.025); for(let i=1;i<=5;i++){const y=-L*(.14+i*.14);g+=`<path d="M ${-W*.8} ${y} Q 0 ${y-L*.1} ${W*.8} ${y}" stroke="${color}" stroke-width="${L*.025}" fill="none" opacity=".8"/>`}for(const k of[-1,1])g+=`<path d="M 0 0 Q ${k*W*.75} ${-L*.45} ${k*W*.25} ${-L*.92}" stroke="${color}" stroke-width="${L*.022}" fill="none" opacity=".7"/>`;return g;
+  }
   if (style === 'radial') {                       // watermelon peperomia
     let g = '';
     for (let i = -5; i <= 5; i++) {
@@ -383,6 +410,18 @@ function marks(spec, L, W, rng) {
       const x = (rng() - 0.5) * W * 1.5, y = -L * (0.12 + rng() * 0.76);
       g += `<path d="M ${x} ${y} q ${W * 0.3} ${-L * 0.08} ${W * 0.5} ${L * 0.02}" stroke="#e4e9ee" stroke-width="${L * 0.05}" fill="none" opacity=".55" stroke-linecap="round"/>`;
     }
+  } else if (m === 'wool') {
+    for(let i=0;i<26;i++){const x=(rng()-.5)*W*1.5,y=-L*(.05+rng()*.9);g+=`<path d="M ${x} ${y} q ${W*.22} ${-L*.1} ${W*.05} ${-L*.22}" stroke="#fffdf0" stroke-width="${L*.018}" fill="none" opacity=".8"/>`}
+  } else if (m === 'flecks') {
+    for(let i=0;i<34;i++){const x=(rng()-.5)*W*1.6,y=-L*(.08+rng()*.82);g+=`<circle cx="${x}" cy="${y}" r="${L*.012}" fill="#f5f0dd" opacity=".85"/>`}
+  } else if (m === 'zebra') {
+    for(let i=1;i<=7;i++){const y=-L*(.1+i*.11);g+=`<path d="M ${-W*.7} ${y} Q 0 ${y-L*.04} ${W*.7} ${y}" stroke="#f5f2df" stroke-width="${L*.04}" fill="none" opacity=".85"/>`}
+  } else if (m === 'spiral') {
+    g+=`<path d="M 0 ${-L*.5} C ${W*.7} ${-L*.75}, ${W*.7} ${-L*.18}, 0 ${-L*.2} C ${-W*.65} ${-L*.22}, ${-W*.75} ${-L*.78}, 0 ${-L*.88}" stroke="#d47a9f" stroke-width="${L*.12}" fill="none" opacity=".62"/>`;
+  } else if (m === 'tentacles') {
+    for(let i=0;i<22;i++){const x=(rng()-.5)*W*1.5,y=-L*(.08+rng()*.84);g+=`<circle cx="${x}" cy="${y}" r="${L*.018}" fill="#d94361"/><path d="M ${x} ${y} l ${(rng()-.5)*L*.08} ${-L*.08}" stroke="#e35a72" stroke-width="${L*.012}"/>`}
+  } else if (m === 'spines' || m === 'thorns') {
+    for(let i=0;i<18;i++){const x=(rng()-.5)*W*1.45,y=-L*(.08+rng()*.84);g+=`<path d="M ${x} ${y} l ${(rng()-.5)*L*.12} ${-L*(m==='thorns'?.1:.07)}" stroke="${m==='thorns'?'#7c432f':'#f1dfb1'}" stroke-width="${L*.012}"/>`}
   }
   return g;
 }
@@ -526,7 +565,7 @@ function renderPlant(plant, opt = {}) {
 
   /* stem / strands */
   /* cacti and living stones cluster on the soil instead of climbing a stem */
-  const squat = ['globe', 'lithops', 'pad'].includes(sp.shape);
+  const squat = ['globe', 'lithops', 'pad', 'column', 'starcactus', 'rosette'].includes(sp.shape);
   const stemH = squat ? 26 : Math.min(150, 34 + leaves.length * 9) * (plant.moss ? 1.2 : 1);
   const baseY = potTop + 4;
 
