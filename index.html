@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#173e31">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Sabrina's Garden II: The Glasshouse Letters</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="companions.css">
+  <link rel="stylesheet" href="joey.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <button class="season" id="seasonBtn"><span id="seasonIcon">🍂</span><b id="seasonName">Autumn</b><small id="seasonTime">Festival</small></button>
+    <div class="title"><b>Glasshouse Letters</b><small>SABRINA'S GARDEN II</small></div>
+    <div class="wallet"><span>✦ <b id="dew">0</b></span><span>◈ <b id="legacy">0</b></span><small id="saveState">✓ saved here</small></div>
+  </header>
+  <main>
+    <section id="garden" class="page on"></section>
+    <section id="greenhouse" class="page"></section>
+    <section id="show" class="page"></section>
+    <section id="journal" class="page"></section>
+  </main>
+  <nav>
+    <button data-page="garden" class="on"><i>❦</i>Garden</button>
+    <button data-page="greenhouse"><i>⌂</i>Glasshouse</button>
+    <button data-page="show"><i>♕</i>Plant Show</button>
+    <button data-page="journal"><i>▧</i>Journal</button>
+  </nav>
+</div>
+<div id="sheet" class="sheet"><div class="shade"></div><div id="sheetBody" class="sheet-body"></div></div>
+<div id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
