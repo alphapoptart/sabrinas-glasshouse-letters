@@ -7,7 +7,7 @@ const V5_LEADS={
 };
 const V5_DECOR_POSITIONS=[[8,67],[21,82],[34,66],[47,86],[61,65],[76,84],[89,67],[14,45],[31,42],[52,43],[72,46],[90,43],[9,91],[40,92],[69,92],[91,91]];
 const V5_PET_IDS={joeytrail:'Joey',salempounce:'Salem',tracecache:'Trace'};
-const V5_BUILD='estate-identities-20260814a';
+const V5_BUILD='expanded-estate-20260815a';
 let v5OwnerKnocks=0;
 
 function v5Defaults(){
@@ -48,7 +48,8 @@ function v5OwnedDecor(){
   DECOR.forEach(d=>{const count=Math.max(0,Math.floor(Number(S.decor?.[d.id])||0));for(let i=0;i<count;i++){const pos=V5_DECOR_POSITIONS[n%V5_DECOR_POSITIONS.length];out.push({id:d.id,index:i,data:d,x:pos[0],y:pos[1]});n++}});
   return out;
 }
-function v5DecorScene(){const owned=v5OwnedDecor();if(!owned.length)return `<button class="scene-decor-empty" data-open-decor-market="1">Your first garden furnishing will appear here</button>`;return `<div class="scene-decor-layer" aria-label="Owned garden decor">${owned.map((x,i)=>`<button class="scene-decor decor-${x.id}" data-scene-decor="${x.id}" style="--x:${x.x}%;--y:${x.y}%;--z:${70+Math.round(x.y)}" aria-label="${esc(x.data.name)}${x.index?` ${x.index+1}`:''}: ${esc(x.data.desc)}"><i>${x.data.icon}</i><span>${esc(x.data.name)}</span></button>`).join('')}</div>`}
+function v5DecorArea(id){return['stall','fountain'].includes(id)?'outside':'greenhouse'}
+function v5DecorScene(area='outside'){const all=v5OwnedDecor(),owned=all.filter(x=>v5DecorArea(x.id)===area);if(!owned.length)return area==='outside'&&all.length?`<button class="scene-decor-empty" data-estate-area="greenhouse">Indoor furnishings are arranged in the greenhouse</button>`:area==='outside'?`<button class="scene-decor-empty" data-open-decor-market="1">Your first garden furnishing will appear here</button>`:'';return `<div class="scene-decor-layer area-${area}" aria-label="Owned ${area} decor">${owned.map((x,i)=>`<button class="scene-decor decor-${x.id}" data-scene-decor="${x.id}" style="--x:${x.x}%;--y:${x.y}%;--z:${70+Math.round(x.y)}" aria-label="${esc(x.data.name)}${x.index?` ${x.index+1}`:''}: ${esc(x.data.desc)}"><i>${x.data.icon}</i><span>${esc(x.data.name)}</span></button>`).join('')}</div>`}
 function v5DecorClass(){return DECOR.filter(d=>(S.decor?.[d.id]||0)>0).map(d=>`has-${d.id}`).join(' ')}
 function v5IdentityBanner(compact=false){const l=v5Lead(),dry=l.id==='sean';return `<section class="identity-banner ${compact?'compact':''}">${v5RoyalPortrait()}<div><span>${dry?'SUNSTONE ESTATE':'MOONROSE ESTATE'}</span><h2>${l.estate}</h2><p>${l.story}</p></div><i>${dry?'Cactus affinity · bright, dry forms grow 5% faster':'Understory affinity · ferns and shade plants grow 5% faster'}</i></section>`}
 

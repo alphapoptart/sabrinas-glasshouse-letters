@@ -9,6 +9,8 @@ The opening sequel chapter is a persistent 14-anchor room, not a menu wrapper. D
 ## Included systems
 
 - prominent Estate and Collection garden modes backed by the same canonical plants, care state and save
+- a three-area Estate navigator with a weathered Outside Garden, climate-controlled working Greenhouse, and the story-driven Fernery
+- persistent plant movement between outside and greenhouse, three free greenhouse climate profiles, visible habitat-fit feedback, and a gentle daily condensation round
 - distinct Moonrose presentation for Princess Sabrina and Sunstone presentation for Prince Sean, with equal affinity bonuses and starter spaces
 - every owned garden furnishing automatically arranged in the living estate while retaining its original slot, laboratory, income or cosiness effect
 - 64-species procedural botanical collection with per-leaf growth, variegation, finishes and grow paths
@@ -32,6 +34,7 @@ node tests/migration.test.js
 node tests/expansion.test.js
 node tests/estate.test.js
 node tests/sequel-v5.test.js
+node tests/estate-areas.test.js
 ```
 
 The sequel is also published separately at <https://alphapoptart.github.io/sabrinas-glasshouse-letters/>. Save data stays on the device; use the Royal screen’s backup export when moving between devices.

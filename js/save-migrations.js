@@ -1,9 +1,10 @@
 /* Forward-only save upgrades. Existing values always win; migrations only add
    fields that older builds did not know about. Unknown fields are retained so
    a newer save can safely pass through this build without being truncated. */
-const GLASSHOUSE_SAVE_VERSION=5;
+const GLASSHOUSE_SAVE_VERSION=6;
 const GLASSHOUSE_RAW_BACKUP_KEY='sabrina-glasshouse-pre-estate-v3-backup';
 const GLASSHOUSE_V5_BACKUP_KEY='sabrina-glasshouse-pre-v5-backup';
+const GLASSHOUSE_V6_BACKUP_KEY='sabrina-glasshouse-pre-v6-backup';
 const GLASSHOUSE_SEQUEL_DEFAULTS={
   lead:null,legacy:1,season:0,seasonClaimed:false,glassRooms:0,showWins:0,
   secret:false,lastSeed:null,lastMorning:null,visitors:[],request:null,
@@ -24,10 +25,16 @@ const saveObject=value=>value&&typeof value==='object'&&!Array.isArray(value)?va
 const saveArray=value=>Array.isArray(value)?value:[];
 
 const FERNERY_ESTATE_DEFAULTS={
-  version:2,activeRoom:'fernery',resources:{glass:2,timber:2,copper:1,pollen:0},
+  version:3,activeRoom:'fernery',resources:{glass:2,timber:2,copper:1,pollen:0},
   heirloomIds:[],shells:{fernery:true,sunstone:false,moon:false,secret:false},
   history:{events:{},shows:{},visitors:[]},
   grounds:{decorLayout:{},storyVisits:[]},
+  plantAreas:{},
+  areaAssignmentsSeeded:false,
+  areas:{
+    outside:{lastVisit:null},
+    greenhouse:{profile:'balanced',lastVisit:null,lastCondensation:null,condensationCount:0},
+  },
   rooms:{fernery:{
     status:'neglected',diagnosed:{pane:false,bench:false,drain:false},
     repairs:{pane:null,bench:null,drain:null},placements:{},decor:{d1:null,d2:null},
@@ -58,7 +65,7 @@ function companionBondsFromLegacy(days){
 function migrateEstateSave(priorEstate,priorSequel){
   const existing=saveObject(priorEstate),legacy=saveObject(priorSequel);
   const estate=mergeSaveDefaults(FERNERY_ESTATE_DEFAULTS,existing);
-  estate.version=Math.max(2,Number(existing.version)||2);
+  estate.version=Math.max(3,Number(existing.version)||3);
   estate.heirloomIds=saveArray(existing.heirloomIds).length?saveArray(existing.heirloomIds):saveArray(legacy.favoriteIds).slice();
   estate.history.events={...saveObject(legacy.events),...saveObject(existing.history?.events)};
   estate.history.shows={...saveObject(legacy.showRecords),...saveObject(existing.history?.shows)};
@@ -137,6 +144,7 @@ load=function(raw){
     try{
       if(!localStorage.getItem(GLASSHOUSE_RAW_BACKUP_KEY))localStorage.setItem(GLASSHOUSE_RAW_BACKUP_KEY,raw);
       if(!localStorage.getItem(GLASSHOUSE_V5_BACKUP_KEY))localStorage.setItem(GLASSHOUSE_V5_BACKUP_KEY,raw);
+      if(!localStorage.getItem(GLASSHOUSE_V6_BACKUP_KEY))localStorage.setItem(GLASSHOUSE_V6_BACKUP_KEY,raw);
     }catch(e){}
   }
   const result=loadBeforeMigrations(JSON.stringify(migrated));
