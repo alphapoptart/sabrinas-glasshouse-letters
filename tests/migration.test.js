@@ -51,7 +51,7 @@ const prior = {
 };
 
 const migrated = JSON.parse(JSON.stringify(context.MIGRATION_TEST.migrateSaveObject(prior)));
-assert.equal(migrated.v, 4);
+assert.equal(migrated.v, 5);
 assert.equal(migrated.coins, 4321); assert.equal(migrated.gems, 17);
 assert.equal(migrated.xp, 88); assert.equal(migrated.level, 12); assert.equal(migrated.streak, 9);
 Object.entries(prior.inv).forEach(([key,value])=>assert.equal(migrated.inv[key],value));
@@ -70,6 +70,10 @@ assert.deepEqual(migrated.sequel.companionDays, prior.sequel.companionDays);
 assert.equal(migrated.sequel.customStoryFlag, 'letter-seven');
 assert.deepEqual(migrated.sequel.events, {}); assert.deepEqual(migrated.sequel.showRecords, {});
 assert.deepEqual(migrated.sequel.sunstoneClaims, []);
+assert.equal(migrated.sequel.gardenMode, 'estate');
+assert.deepEqual(migrated.sequel.identityStarters, { sabrina:false, sean:false });
+assert.equal(migrated.sequel.petGames.Joey.plays, 0);
+assert.deepEqual(migrated.sequel.ownerTools.history, []);
 assert.equal(migrated.sound, false); assert.equal(migrated.music, true);
 assert.equal(migrated.sfxVol, 23); assert.equal(migrated.musVol, 61);
 assert.equal(migrated.gentle, false); assert.equal(migrated.gardener, 'Sean'); assert.equal(migrated.hideInstall, true);
@@ -83,11 +87,25 @@ assert.equal(migrated.estate.rooms.fernery.companions.Joey.bond, 1);
 assert.deepEqual(migrated.estate.history.visitors, prior.sequel.visitors);
 
 context.load(JSON.stringify(prior));
-assert.equal(loadedState.v, 4, 'the real load wrapper should apply the migration');
+assert.equal(loadedState.v, 5, 'the real load wrapper should apply the migration');
 assert.equal(loadedState.coins, 4321); assert.equal(loadedState.plants[0].nick, 'Goldie');
 assert.equal(loadedState.sequel.lead, 'sean'); assert.equal(loadedState.sequel.legacy, 7);
 assert.equal(loadedState.sound, false); assert.deepEqual(loadedState.unknownFutureField, { stillHere: true });
 assert.equal(backupStore.get('sabrina-glasshouse-pre-estate-v3-backup'), JSON.stringify(prior), 'the raw prior save is backed up before migration');
+assert.equal(backupStore.get('sabrina-glasshouse-pre-v5-backup'), JSON.stringify(prior), 'the full pre-v5 save is backed up before migration');
+
+const currentV4 = {
+  ...migrated, v:4, coins:9876, gems:31, inv:{...migrated.inv,tonic:7}, decor:{rug:2,lights:1,fountain:1},
+  sequel:{...migrated.sequel,gardenMode:undefined,lead:'sabrina',season:19,legacy:11,companionDays:{'2026-08-13:Trace':true}},
+  estate:{...migrated.estate,activeRoom:'fernery',resources:{glass:4,timber:5,copper:6,pollen:2},rooms:{fernery:{...migrated.estate.rooms.fernery,placements:{a1:41},letterStep:2,companions:{...migrated.estate.rooms.fernery.companions,Trace:{bond:4,lastDay:'2026-08-13',clues:['fernery']}}}}},
+};
+const fromV4 = JSON.parse(JSON.stringify(context.MIGRATION_TEST.migrateSaveObject(currentV4)));
+assert.equal(fromV4.v,5);assert.equal(fromV4.coins,9876);assert.equal(fromV4.gems,31);assert.equal(fromV4.inv.tonic,7);
+assert.deepEqual(fromV4.decor,currentV4.decor);assert.equal(fromV4.plants[0].id,41);
+assert.equal(fromV4.estate.rooms.fernery.placements.a1,41);assert.equal(fromV4.estate.rooms.fernery.letterStep,2);
+assert.equal(fromV4.estate.rooms.fernery.companions.Trace.bond,4);assert.equal(fromV4.estate.resources.pollen,2);
+assert.equal(fromV4.sequel.lead,'sabrina');assert.equal(fromV4.sequel.legacy,11);assert.equal(fromV4.sequel.season,19);
+assert.equal(fromV4.sequel.gardenMode,'estate');assert.equal(fromV4.estate.version,2);
 
 const partial = { v: 3, plants:[{id:9,speciesId:'monstera',leaves:[]}], nextId:10, coins:77, sequel:{favoriteIds:[9],glassRooms:1}, estate:{rooms:{fernery:{placements:{a2:9},diagnosed:{pane:true},customRoomFlag:'preserve'}}}, customRoot:'keep' };
 const partialMigrated = JSON.parse(JSON.stringify(context.MIGRATION_TEST.migrateSaveObject(partial)));
@@ -101,4 +119,4 @@ assert.equal(partialMigrated.customRoot,'keep');
 const twice = JSON.parse(JSON.stringify(context.MIGRATION_TEST.migrateSaveObject(partialMigrated)));
 assert.deepEqual(twice, partialMigrated, 'estate migration must be deterministic and idempotent');
 
-console.log('Migration checks passed: v1–v3 progress preserved, raw backup written, partial saves repaired, and v4 migration is idempotent.');
+console.log('Migration checks passed: v1–v4 progress preserved, pre-v5 raw backup written, partial saves repaired, and v5 migration is idempotent.');

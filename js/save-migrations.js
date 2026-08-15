@@ -1,21 +1,33 @@
 /* Forward-only save upgrades. Existing values always win; migrations only add
    fields that older builds did not know about. Unknown fields are retained so
    a newer save can safely pass through this build without being truncated. */
-const GLASSHOUSE_SAVE_VERSION=4;
+const GLASSHOUSE_SAVE_VERSION=5;
 const GLASSHOUSE_RAW_BACKUP_KEY='sabrina-glasshouse-pre-estate-v3-backup';
+const GLASSHOUSE_V5_BACKUP_KEY='sabrina-glasshouse-pre-v5-backup';
 const GLASSHOUSE_SEQUEL_DEFAULTS={
   lead:null,legacy:1,season:0,seasonClaimed:false,glassRooms:0,showWins:0,
   secret:false,lastSeed:null,lastMorning:null,visitors:[],request:null,
   favoriteIds:[],scenePage:0,events:{},sunstoneClaims:[],showRecords:{},
-  companionDays:{},weatherDay:'',
+  companionDays:{},weatherDay:'',gardenMode:'estate',identityVersion:1,
+  decorLayout:{},identityStarters:{sabrina:false,sean:false},
+  petGames:{
+    Joey:{plays:0,wins:0,best:0,lastPlayed:null},
+    Salem:{plays:0,wins:0,best:0,lastPlayed:null},
+    Trace:{plays:0,wins:0,best:0,lastPlayed:null},
+  },
+  ownerTools:{
+    unlocked:false,history:[],giftDrafts:[],
+    giftService:{configured:false,endpoint:null},
+  },
 };
 const saveObject=value=>value&&typeof value==='object'&&!Array.isArray(value)?value:{};
 const saveArray=value=>Array.isArray(value)?value:[];
 
 const FERNERY_ESTATE_DEFAULTS={
-  version:1,activeRoom:'fernery',resources:{glass:2,timber:2,copper:1,pollen:0},
+  version:2,activeRoom:'fernery',resources:{glass:2,timber:2,copper:1,pollen:0},
   heirloomIds:[],shells:{fernery:true,sunstone:false,moon:false,secret:false},
   history:{events:{},shows:{},visitors:[]},
+  grounds:{decorLayout:{},storyVisits:[]},
   rooms:{fernery:{
     status:'neglected',diagnosed:{pane:false,bench:false,drain:false},
     repairs:{pane:null,bench:null,drain:null},placements:{},decor:{d1:null,d2:null},
@@ -46,7 +58,7 @@ function companionBondsFromLegacy(days){
 function migrateEstateSave(priorEstate,priorSequel){
   const existing=saveObject(priorEstate),legacy=saveObject(priorSequel);
   const estate=mergeSaveDefaults(FERNERY_ESTATE_DEFAULTS,existing);
-  estate.version=Math.max(1,Number(existing.version)||1);
+  estate.version=Math.max(2,Number(existing.version)||2);
   estate.heirloomIds=saveArray(existing.heirloomIds).length?saveArray(existing.heirloomIds):saveArray(legacy.favoriteIds).slice();
   estate.history.events={...saveObject(legacy.events),...saveObject(existing.history?.events)};
   estate.history.shows={...saveObject(legacy.showRecords),...saveObject(existing.history?.shows)};
@@ -92,12 +104,19 @@ function migrateSaveObject(value){
   });
   migrated.plants=saveArray(prior.plants).map(migratePlantSave);
   migrated.sequel={...GLASSHOUSE_SEQUEL_DEFAULTS,...saveObject(prior.sequel)};
+  Object.keys(GLASSHOUSE_SEQUEL_DEFAULTS).forEach(key=>{
+    if(migrated.sequel[key]===undefined)migrated.sequel[key]=GLASSHOUSE_SEQUEL_DEFAULTS[key];
+  });
   ['visitors','favoriteIds','sunstoneClaims'].forEach(key=>{
     migrated.sequel[key]=saveArray(prior.sequel?.[key]);
   });
   ['events','showRecords','companionDays'].forEach(key=>{
     migrated.sequel[key]={...saveObject(prior.sequel?.[key])};
   });
+  migrated.sequel.decorLayout={...saveObject(prior.sequel?.decorLayout)};
+  migrated.sequel.identityStarters={...GLASSHOUSE_SEQUEL_DEFAULTS.identityStarters,...saveObject(prior.sequel?.identityStarters)};
+  migrated.sequel.petGames=mergeSaveDefaults(GLASSHOUSE_SEQUEL_DEFAULTS.petGames,prior.sequel?.petGames);
+  migrated.sequel.ownerTools=mergeSaveDefaults(GLASSHOUSE_SEQUEL_DEFAULTS.ownerTools,prior.sequel?.ownerTools);
   if(prior.nextId===undefined){
     const ids=[...migrated.plants,...migrated.lab].map(item=>Number(item.id)||0);
     migrated.nextId=Math.max(0,...ids)+1;
@@ -115,7 +134,10 @@ load=function(raw){
   if(!parsed||!Array.isArray(parsed.plants))return loadBeforeMigrations(raw);
   const from=Number(parsed.v)||1,migrated=migrateSaveObject(parsed);
   if(from<GLASSHOUSE_SAVE_VERSION&&typeof localStorage!=='undefined'){
-    try{if(!localStorage.getItem(GLASSHOUSE_RAW_BACKUP_KEY))localStorage.setItem(GLASSHOUSE_RAW_BACKUP_KEY,raw)}catch(e){}
+    try{
+      if(!localStorage.getItem(GLASSHOUSE_RAW_BACKUP_KEY))localStorage.setItem(GLASSHOUSE_RAW_BACKUP_KEY,raw);
+      if(!localStorage.getItem(GLASSHOUSE_V5_BACKUP_KEY))localStorage.setItem(GLASSHOUSE_V5_BACKUP_KEY,raw);
+    }catch(e){}
   }
   const result=loadBeforeMigrations(JSON.stringify(migrated));
   if(result&&from<GLASSHOUSE_SAVE_VERSION)result.migratedFrom=from;
